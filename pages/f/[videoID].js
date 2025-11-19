@@ -1,3 +1,5 @@
+Silahkan perbarui code saya ini ya
+
 import { useRouter } from 'next/router';
 import { useEffect, useState, useRef } from 'react';
 import Head from 'next/head';
@@ -9,14 +11,13 @@ export default function VideoPlayerPage() {
   const [videoData, setVideoData] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch video data
   useEffect(() => {
     if (!videoID) return;
 
     const fetchVideoData = async () => {
       try {
         const response = await fetch(`/api/videos?videoID=${videoID}`);
-        if (!response.ok) throw new Error("Gagal mengambil data");
-        
         const data = await response.json();
         setVideoData(data);
         setLoading(false);
@@ -29,6 +30,7 @@ export default function VideoPlayerPage() {
     fetchVideoData();
   }, [videoID]);
 
+  // Setup video autoplay and event listeners
   useEffect(() => {
     if (!videoData || !videoRef.current) return;
 
@@ -36,36 +38,28 @@ export default function VideoPlayerPage() {
 
     const setupVideo = async () => {
       try {
-        const playPromise = videoElement.play();
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              trackHistatsEvent('play');
-            })
-            .catch((error) => {
-              console.log('Autoplay prevented:', error);
-              const playOnInteraction = () => {
-                videoElement.play();
-                trackHistatsEvent('play_interaction');
-                ['click', 'touchstart'].forEach(evt => 
-                  document.removeEventListener(evt, playOnInteraction)
-                );
-              };
-              ['click', 'touchstart'].forEach(evt => 
-                document.addEventListener(evt, playOnInteraction)
-              );
-            });
-        }
-      } catch (err) {
-        console.error(err);
+        await videoElement.play();
+        trackHistatsEvent('play');
+      } catch (error) {
+        console.log('Autoplay prevented:', error);
+
+        // Fallback dengan user interaction
+        const playOnInteraction = () => {
+          videoElement.play();
+          document.removeEventListener('click', playOnInteraction);
+          document.removeEventListener('touchstart', playOnInteraction);
+        };
+
+        document.addEventListener('click', playOnInteraction);
+        document.addEventListener('touchstart', playOnInteraction);
       }
     };
 
+    // Double-tap untuk play/pause di mobile
     let lastTap = 0;
     const handleTouchEnd = (event) => {
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
-      
       if (tapLength < 300 && tapLength > 0) {
         event.preventDefault();
         if (videoElement.paused) {
@@ -77,11 +71,19 @@ export default function VideoPlayerPage() {
       lastTap = currentTime;
     };
 
+    // Track play events
+    const handlePlay = () => {
+      trackHistatsEvent('play');
+    };
+
     videoElement.addEventListener('touchend', handleTouchEnd);
+    videoElement.addEventListener('play', handlePlay);
+
     setupVideo();
 
     return () => {
       videoElement.removeEventListener('touchend', handleTouchEnd);
+      videoElement.removeEventListener('play', handlePlay);
     };
   }, [videoData]);
 
@@ -95,60 +97,38 @@ export default function VideoPlayerPage() {
     }
   };
 
-  // --- STYLE OBJECTS (PENGGANTI STYLE JSX) ---
-  const loadingStyle = {
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    backgroundColor: 'black',
-    color: 'white',
-    fontFamily: 'sans-serif'
-  };
-
-  const containerStyle = {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh', // Fallback
-    height: '100dvh', // Modern Mobile
-    backgroundColor: 'black',
-    zIndex: 1,
-    overflow: 'hidden',
-    margin: 0,
-    padding: 0
-  };
-
-  const videoStyle = {
-    width: '100%',
-    height: '100%',
-    objectFit: 'cover',
-    display: 'block'
-  };
-
   if (loading) {
     return (
-      <div style={loadingStyle}>
-        {/* Spinner sederhana dengan CSS inline */}
-        <div style={{
-            width: '40px',
-            height: '40px',
-            border: '4px solid rgba(255,255,255,0.3)',
-            borderTop: '4px solid #fff',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-        }}></div>
-        {/* Kita inject keyframes manual lewat style tag di bawah */}
-        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
+      <div className="loading">
+        <p>Loading video...</p>
+        <style jsx>{`
+          .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: black;
+            color: white;
+          }
+        `}</style>
       </div>
     );
   }
 
   if (!videoData) {
     return (
-      <div style={loadingStyle}>
-        <p>Video tidak ditemukan.</p>
+      <div className="error">
+        <p>Video not found</p>
+        <style jsx>{`
+          .error {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: black;
+            color: white;
+          }
+        `}</style>
       </div>
     );
   }
@@ -156,23 +136,9 @@ export default function VideoPlayerPage() {
   return (
     <>
       <Head>
-        <title>Video Player</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-        <meta name="theme-color" content="#000000" />
-        
-        {/* --- GLOBAL CSS RESET (Manual lewat Head) --- */}
-        <style>{`
-          html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000;
-            overflow: hidden;
-          }
-        `}</style>
-
-        {/* Histats Code */}
+        <title>Video Player - {videoID}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        {/* Histats Analytics */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -190,17 +156,51 @@ export default function VideoPlayerPage() {
         />
       </Head>
 
-      <div style={containerStyle}>
+      <div className="player-container">
         <video
           ref={videoRef}
           src={videoData.source}
-          style={videoStyle}
-          controlsList="nodownload"
+          className="video-player"
           controls
           playsInline
           webkit-playsinline="true"
-          loop
         />
+
+        <style jsx>{`
+          .player-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+          }
+          
+          .video-player {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+          }
+          
+          @media (orientation: portrait) {
+            .video-player {
+              width: 100%;
+              height: auto;
+            }
+          }
+          
+          @media (orientation: landscape) {
+            .video-player {
+              width: auto;
+              height: 100%;
+            }
+          }
+        `}</style>
       </div>
     </>
   );
