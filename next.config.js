@@ -1,11 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',        // Untuk optimisasi deployment
-  trailingSlash: false,        // Untuk trailing slash
-  images: {                    // Konfigurasi image optimization
-    domains: ['example.com'],
+  output: 'standalone',
+  trailingSlash: false,
+  images: {
+    // Ganti 'domains' dengan 'remotePatterns'
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'example.com',
+        pathname: '**',
+      },
+    ],
   },
-  async headers() {            // Custom headers
+  async headers() {
     return [
       {
         source: '/api/:path*',
