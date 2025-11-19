@@ -95,40 +95,60 @@ export default function VideoPlayerPage() {
     }
   };
 
+  // --- STYLE OBJECTS (PENGGANTI STYLE JSX) ---
+  const loadingStyle = {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    height: '100vh',
+    backgroundColor: 'black',
+    color: 'white',
+    fontFamily: 'sans-serif'
+  };
+
+  const containerStyle = {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh', // Fallback
+    height: '100dvh', // Modern Mobile
+    backgroundColor: 'black',
+    zIndex: 1,
+    overflow: 'hidden',
+    margin: 0,
+    padding: 0
+  };
+
+  const videoStyle = {
+    width: '100%',
+    height: '100%',
+    objectFit: 'cover',
+    display: 'block'
+  };
+
   if (loading) {
     return (
-      <div className="loading">
-        <div className="spinner"></div>
-        <style jsx>{`
-          .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: black;
-            color: white;
-          }
-          .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255,255,255,0.3);
-            border-top: 4px solid #fff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-          }
-          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        `}</style>
+      <div style={loadingStyle}>
+        {/* Spinner sederhana dengan CSS inline */}
+        <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid rgba(255,255,255,0.3)',
+            borderTop: '4px solid #fff',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+        }}></div>
+        {/* Kita inject keyframes manual lewat style tag di bawah */}
+        <style>{`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   if (!videoData) {
     return (
-      <div className="error">
+      <div style={loadingStyle}>
         <p>Video tidak ditemukan.</p>
-        <style jsx>{`
-          .error { display: flex; justify-content: center; align-items: center; height: 100vh; background: black; color: white; }
-        `}</style>
       </div>
     );
   }
@@ -140,10 +160,19 @@ export default function VideoPlayerPage() {
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
         <meta name="theme-color" content="#000000" />
         
-        {/* KODE IKLAN ADSTERRA (Hapus baris ini jika belum ada linknya) */}
-        {/* <script type="text/javascript" src="//pl12345.adsterra.com/zone.js"></script> */}
+        {/* --- GLOBAL CSS RESET (Manual lewat Head) --- */}
+        <style>{`
+          html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            overflow: hidden;
+          }
+        `}</style>
 
-        {/* Histats Code - Pastikan ID sesuai */}
+        {/* Histats Code */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -161,48 +190,17 @@ export default function VideoPlayerPage() {
         />
       </Head>
 
-      <style jsx global>{`
-        html, body {
-          margin: 0;
-          padding: 0;
-          width: 100%;
-          height: 100%;
-          background-color: #000;
-          overflow: hidden;
-        }
-      `}</style>
-
-      <div className="player-container">
+      <div style={containerStyle}>
         <video
           ref={videoRef}
           src={videoData.source}
-          className="video-player"
+          style={videoStyle}
           controlsList="nodownload"
           controls
           playsInline
           webkit-playsinline="true"
           loop
         />
-
-        <style jsx>{`
-          .player-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100dvh;
-            background: black;
-            z-index: 1;
-            overflow: hidden;
-          }
-          
-          .video-player {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            display: block;
-          }
-        `}</style>
       </div>
     </>
   );
