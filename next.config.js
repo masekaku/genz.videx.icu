@@ -1,10 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,       // Disarankan true untuk mendeteksi potensi masalah
-  output: 'standalone',        // Bagus untuk deploy
-  trailingSlash: false,        // SEO: Pastikan URL konsisten tanpa garis miring di akhir
-  
-  // Bagian headers ini penting untuk API video player kamu agar tidak kena CORS
+  reactStrictMode: true,
+  output: 'standalone',
+  trailingSlash: false,
+  // Bagian headers agar API kamu bisa diakses player dengan lancar
   async headers() {
     return [
       {
