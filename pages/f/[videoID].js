@@ -9,13 +9,18 @@ export default function VideoPlayerPage() {
   const [videoData, setVideoData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Fetch video data
+  // 1. Fetch Video Data
   useEffect(() => {
     if (!videoID) return;
 
     const fetchVideoData = async () => {
       try {
+        // Pastikan API ini sesuai dengan struktur kamu
+        // Jika kamu pakai JSON generator tadi, pastikan endpoint ini mencari ID yang benar
         const response = await fetch(`/api/videos?videoID=${videoID}`);
+        
+        if (!response.ok) throw new Error("Gagal mengambil data");
+        
         const data = await response.json();
         setVideoData(data);
         setLoading(false);
@@ -28,7 +33,7 @@ export default function VideoPlayerPage() {
     fetchVideoData();
   }, [videoID]);
 
-  // Setup video autoplay and event listeners
+  // 2. Setup Autoplay & Events
   useEffect(() => {
     if (!videoData || !videoRef.current) return;
 
@@ -36,30 +41,43 @@ export default function VideoPlayerPage() {
 
     const setupVideo = async () => {
       try {
-        await videoElement.play();
-        trackHistatsEvent('play');
-      } catch (error) {
-        console.log('Autoplay prevented:', error);
-        
-        // Fallback dengan user interaction
-        const playOnInteraction = () => {
-          videoElement.play();
-          document.removeEventListener('click', playOnInteraction);
-          document.removeEventListener('touchstart', playOnInteraction);
-        };
-        
-        document.addEventListener('click', playOnInteraction);
-        document.addEventListener('touchstart', playOnInteraction);
+        // Usahakan play, biasanya browser butuh muted=true untuk autoplay pertama kali
+        // Tapi kita coba play langsung dulu
+        const playPromise = videoElement.play();
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              trackHistatsEvent('play');
+            })
+            .catch((error) => {
+              console.log('Autoplay prevented by browser (User interaction needed):', error);
+              // Fallback: Tunggu user tap layar baru play
+              const playOnInteraction = () => {
+                videoElement.play();
+                trackHistatsEvent('play_interaction');
+                ['click', 'touchstart'].forEach(evt => 
+                  document.removeEventListener(evt, playOnInteraction)
+                );
+              };
+              ['click', 'touchstart'].forEach(evt => 
+                document.addEventListener(evt, playOnInteraction)
+              );
+            });
+        }
+      } catch (err) {
+        console.error(err);
       }
     };
 
-    // Double-tap untuk play/pause di mobile
+    // Logika Double Tap untuk Pause/Play
     let lastTap = 0;
     const handleTouchEnd = (event) => {
       const currentTime = new Date().getTime();
       const tapLength = currentTime - lastTap;
+      
+      // Jika tap 2x dalam waktu 300ms
       if (tapLength < 300 && tapLength > 0) {
-        event.preventDefault();
+        event.preventDefault(); // Mencegah zoom default browser
         if (videoElement.paused) {
           videoElement.play();
         } else {
@@ -69,19 +87,11 @@ export default function VideoPlayerPage() {
       lastTap = currentTime;
     };
 
-    // Track play events
-    const handlePlay = () => {
-      trackHistatsEvent('play');
-    };
-
     videoElement.addEventListener('touchend', handleTouchEnd);
-    videoElement.addEventListener('play', handlePlay);
-
     setupVideo();
 
     return () => {
       videoElement.removeEventListener('touchend', handleTouchEnd);
-      videoElement.removeEventListener('play', handlePlay);
     };
   }, [videoData]);
 
@@ -98,7 +108,7 @@ export default function VideoPlayerPage() {
   if (loading) {
     return (
       <div className="loading">
-        <p>Loading video...</p>
+        <div className="spinner"></div>
         <style jsx>{`
           .loading {
             display: flex;
@@ -108,6 +118,15 @@ export default function VideoPlayerPage() {
             background: black;
             color: white;
           }
+          .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+          @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         `}</style>
       </div>
     );
@@ -116,16 +135,9 @@ export default function VideoPlayerPage() {
   if (!videoData) {
     return (
       <div className="error">
-        <p>Video not found</p>
+        <p>Video tidak ditemukan.</p>
         <style jsx>{`
-          .error {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: black;
-            color: white;
-          }
+          .error { display: flex; justify-content: center; align-items: center; height: 100vh; background: black; color: white; }
         `}</style>
       </div>
     );
@@ -134,9 +146,11 @@ export default function VideoPlayerPage() {
   return (
     <>
       <Head>
-        <title>Video Player - {videoID}</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        {/* Histats Analytics */}
+        <title>Video Player</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+        <meta name="theme-color" content="#000000" />
+        
+        {/* Histats Code - JANGAN LUPA GANTI ID 12345 DENGAN ID ASLI KAMU */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -153,50 +167,49 @@ export default function VideoPlayerPage() {
           }}
         />
       </Head>
-      
+
+      {/* Global Styles untuk Reset Margin Browser */}
+      <style jsx global>{`
+        html, body {
+          margin: 0;
+          padding: 0;
+          width: 100%;
+          height: 100%;
+          background-color: #000;
+          overflow: hidden; /* Mencegah scroll */
+        }
+      `}</style>
+
       <div className="player-container">
         <video
           ref={videoRef}
-          src={videoData.source}
+          src={videoData.source} // Pastikan JSON kamu pakai key 'source'
           className="video-player"
-          controls
+          controlsList="nodownload" // Opsional: menyembunyikan tombol download
+          controls // Tampilkan kontrol bawaan (bisa dihapus jika ingin full gesture)
           playsInline
           webkit-playsinline="true"
+          loop // Agar video mengulang terus
+          // muted // Aktifkan ini jika ingin autoplay 100% jalan tanpa interaksi user
         />
-        
+
         <style jsx>{`
           .player-container {
-            position: fixed;
+            position: absolute;
             top: 0;
             left: 0;
             width: 100vw;
-            height: 100vh;
+            height: 100dvh; /* Dynamic Viewport Height (Penting untuk Mobile) */
             background: black;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 0;
-            padding: 0;
+            z-index: 1;
+            overflow: hidden;
           }
           
           .video-player {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-          }
-          
-          @media (orientation: portrait) {
-            .video-player {
-              width: 100%;
-              height: auto;
-            }
-          }
-          
-          @media (orientation: landscape) {
-            .video-player {
-              width: auto;
-              height: 100%;
-            }
+            object-fit: cover; /* INI YANG BIKIN FULL SCREEN TANPA GAP */
+            display: block;
           }
         `}</style>
       </div>
