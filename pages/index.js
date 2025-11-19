@@ -4,38 +4,37 @@ import Head from 'next/head';
 
 export async function getServerSideProps(context) {
   try {
-    // 1. Deteksi URL secara dinamis (bisa jalan di localhost maupun Vercel)
+    // 1. Deteksi URL website secara otomatis (Localhost vs Vercel)
     const { req } = context;
     const protocol = req.headers['x-forwarded-proto'] || 'http';
     const host = req.headers.host;
     const baseUrl = `${protocol}://${host}`;
 
-    // 2. Fetch ke URL yang benar
-    const res = await fetch(`${baseUrl}/api/list`);
-
+    // 2. Panggil API Ringan yang baru (/api/random)
+    const res = await fetch(`${baseUrl}/api/random`);
+    
     if (!res.ok) {
-      throw new Error(`Failed to fetch: ${res.status}`);
+      throw new Error(`Gagal fetch data: ${res.status}`);
     }
 
-    const videos = await res.json();
+    const videoData = await res.json();
 
-    // Cek jika array kosong
-    if (!videos || videos.length === 0) {
-      return { props: {} }; // Lanjut ke client-side jika tidak ada video
+    // 3. Jika dapat data, langsung redirect dari Server (Cepat)
+    if (videoData && videoData.id) {
+      return {
+        redirect: {
+          destination: `/f/${videoData.id}`,
+          permanent: false,
+        },
+      };
     }
 
-    const randomVideo = videos[Math.floor(Math.random() * videos.length)];
+    // Jika data kosong
+    return { props: {} };
 
-    return {
-      redirect: {
-        destination: `/f/${randomVideo.id}`,
-        permanent: false,
-      },
-    };
   } catch (error) {
-    console.error('Server-side redirect failed:', error);
-    // Jika server error, jangan bikin crash (500).
-    // Return props kosong saja, biar 'useEffect' di bawah yang kerja.
+    console.error('Server-side Error:', error);
+    // Jangan crash (Error 500), biarkan lanjut ke client-side loading
     return {
       props: {},
     };
@@ -45,25 +44,23 @@ export async function getServerSideProps(context) {
 export default function Home() {
   const router = useRouter();
 
-  // Fallback client-side redirect
-  // (Akan jalan kalau getServerSideProps gagal atau lambat)
+  // Fallback: Jika server gagal redirect, Browser yang akan mencoba
   useEffect(() => {
-    const redirectToRandom = async () => {
+    const fetchRandomClient = async () => {
       try {
-        const response = await fetch('/api/list');
-        if (!response.ok) return;
-        
-        const videos = await response.json();
-        if (videos && videos.length > 0) {
-          const randomVideo = videos[Math.floor(Math.random() * videos.length)];
-          router.push(`/f/${randomVideo.id}`);
+        const res = await fetch('/api/random'); // Panggil API yang ringan
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.id) {
+            router.push(`/f/${data.id}`);
+          }
         }
       } catch (error) {
-        console.error('Client-side redirect failed:', error);
+        console.error('Client redirect failed:', error);
       }
     };
 
-    redirectToRandom();
+    fetchRandomClient();
   }, [router]);
 
   return (
@@ -72,17 +69,33 @@ export default function Home() {
         <title>Video Player</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       </Head>
-      <div className="loading">
-        <p>Loading random video...</p>
+      <div className="loading-container">
+        <div className="spinner"></div>
+        <p>Memuat video...</p>
+        
         <style jsx>{`
-          .loading {
+          .loading-container {
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background: black;
-            color: white;
+            background: #000;
+            color: #fff;
             font-family: sans-serif;
+          }
+          .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #fff;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+          }
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
           }
         `}</style>
       </div>
