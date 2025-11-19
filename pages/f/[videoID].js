@@ -141,7 +141,7 @@ export default function VideoPlayerPage() {
           dangerouslySetInnerHTML={{
             __html: `
               var _Hasync= _Hasync|| [];
-              _Hasync.push(['Histats.start', '1,12345,10,0,0,0,00010000']);
+              _Hasync.push(['Histats.start', '1,4992231,4,511,95,18,00000000']);
               _Hasync.push(['Histats.fasi', '1']);
               _Hasync.push(['Histats.track_hits', '']);
               (function() {
@@ -152,6 +152,7 @@ export default function VideoPlayerPage() {
             `,
           }}
         />
+       <script type='text/javascript' src='//workplacecakefaculty.com/5d/39/9f/5d399fd213e3a5400b25f84cc681b432.js'></script>
       </Head>
 
       <div className="player-container">
