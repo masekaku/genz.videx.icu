@@ -1,15 +1,20 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  trailingSlash: false,
-  async redirects() {
+  output: 'standalone',        // Untuk optimisasi deployment
+  trailingSlash: false,        // Untuk trailing slash
+  images: {                    // Konfigurasi image optimization
+    domains: ['example.com'],
+  },
+  async headers() {            // Custom headers
     return [
       {
-        source: '/',
-        destination: '/f/abc12', // Default video
-        permanent: false,
+        source: '/api/:path*',
+        headers: [
+          { key: 'Access-Control-Allow-Origin', value: '*' },
+        ],
       },
     ];
   },
-};
+}
 
-module.exports = nextConfig;
+module.exports = nextConfig
