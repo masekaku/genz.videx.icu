@@ -1,13 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental: {
-    appDir: false,
-  },
-  async rewrites() {
+  trailingSlash: false,
+  async redirects() {
     return [
       {
-        source: '/f/:videoID',
-        destination: '/f/:videoID',
+        source: '/',
+        destination: '/f/abc12', // Default video
+        permanent: false,
       },
     ];
   },
