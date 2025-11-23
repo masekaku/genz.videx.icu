@@ -141,7 +141,7 @@ export default function VideoPlayerPage() {
           dangerouslySetInnerHTML={{
             __html: `
               var _Hasync= _Hasync|| [];
-              _Hasync.push(['Histats.start', '1,4992231,4,511,95,18,00000000']);
+              _Hasync.push(['Histats.start', '1,4992231,7,511,95,18,00000000']);
               _Hasync.push(['Histats.fasi', '1']);
               _Hasync.push(['Histats.track_hits', '']);
               (function() {
