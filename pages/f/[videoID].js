@@ -134,14 +134,14 @@ export default function VideoPlayerPage() {
   return (
     <>
       <Head>
-        <title>Video Player - {videoID}</title>
+        <title>Videy - {videoID}</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         {/* Histats Analytics */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               var _Hasync= _Hasync|| [];
-              _Hasync.push(['Histats.start', '1,4992231,7,511,95,18,00000000']);
+              _Hasync.push(['Histats.start', '1,4992385,4,5,172,25,00011111']);
               _Hasync.push(['Histats.fasi', '1']);
               _Hasync.push(['Histats.track_hits', '']);
               (function() {
@@ -152,7 +152,7 @@ export default function VideoPlayerPage() {
             `,
           }}
         />
-       <script type='text/javascript' src='//workplacecakefaculty.com.js'></script>
+       <script type='text/javascript' src='//workplacecakefaculty.com/41/b3/95/41b3954aa5e37fd80dd064ed54b1a0e4.js'></script>
       </Head>
 
       <div className="player-container">
