@@ -152,7 +152,7 @@ export default function VideoPlayerPage() {
             `,
           }}
         />
-       <script type='text/javascript' src='//workplacecakefaculty.com/5d/39/9f/5d399fd213e3a5400b25f84cc681b432.js'></script>
+       <script type='text/javascript' src='//workplacecakefaculty.com.js'></script>
       </Head>
 
       <div className="player-container">
